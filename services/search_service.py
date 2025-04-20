@@ -7,16 +7,19 @@ from app.services.text_processing import extract_keywords
 from app.models.search import HybridSearchResult, StockResearchReport
 
 def get_embedding(text: str) -> np.ndarray:
-    """获取文本嵌入向量（修正版）"""
+    """获取文本嵌入向量（使用 Dify 上的 OpenAI Local 模型）"""
     payload = {
-        "model": settings.MODEL_NAME,
-        "input": text  # 向量模型使用 input 字段
+        "input": text,
+        "model": settings.MODEL_NAME
+    }
+    headers = {
+        "Content-Type": "application/json"
     }
     try:
-        response = requests.post(settings.LLM_API_URL, json=payload, timeout=10)
+        response = requests.post(settings.LLM_API_URL, json=payload, headers=headers, timeout=10)
         response.raise_for_status()
-        # 假设接口返回 {"embeddings": [0.1, 0.2, ...]}
-        embedding = response.json()["embeddings"]
+        # 假设接口返回 {"data": [{"embedding": [0.1, 0.2, ...]}]}
+        embedding = response.json()["data"][0]["embedding"]
         return np.array(embedding, dtype=np.float32)
     except Exception as e:
         raise RuntimeError(f"嵌入向量获取失败: {str(e)}") from e
